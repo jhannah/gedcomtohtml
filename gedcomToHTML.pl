@@ -121,40 +121,40 @@ if (open(IN_FILE, "<$prefsFile")) {
     while (<IN_FILE>) {
         # match anything except space or = then space = space anything except  or # anything
         # e.g. variable = value # comment
-      if (/([^\s=]*)\s*=\s([^#\s]*).*\n/) {
-                            # There must be a better way of doing this...
-                            if ($1 eq "family_table") {
-                                $family_table = $2; }
-                            elsif ($1 eq "print_family") {
-                                $print_family = $2; }
-                            elsif ($1 eq "print_notes") {
-                                $print_notes = $2; }
-                            elsif ($1 eq "print_sources") {
-                                $print_sources = $2; }
-                            elsif ($1 eq "make_stats") {
-                                $make_stats = $2; }
-                            elsif ($1 eq "add_titles") {
-                                $add_titles = $2; }
-                            elsif ($1 eq "group_letters") {
-                                $group_letters = $2;  }                         
-                            elsif ($1 eq "check_images") {
-                                $check_images = $2;  }
-                            elsif ($1 eq "extension") {
-                                $extension = $2;  }
-                            elsif ($1 eq "private") {
-                                $private = $2;  }
-                            elsif ($1 eq "out_dir") {
-                                $out_dir = $2;  }
-                            elsif ($1 eq "photo_dir") {
-                                $photo_dir = $2; }
-                            elsif ($1 eq "photo_thumbnails") {
-                                $photoThumbnails = $2; }
-                            elsif ($1 eq "treepic_path") {
-                                $treepic_path = $2;  }
-                            elsif ($1 eq "update_status") {
-                                $updateStatus = $2; }
-                        }
-                       }
+        if (/([^\s=]*)\s*=\s([^#\s]*).*\n/) {
+            # There must be a better way of doing this...
+            if ($1 eq "family_table") {
+                $family_table = $2; }
+            elsif ($1 eq "print_family") {
+                $print_family = $2; }
+            elsif ($1 eq "print_notes") {
+                $print_notes = $2; }
+            elsif ($1 eq "print_sources") {
+                $print_sources = $2; }
+            elsif ($1 eq "make_stats") {
+                $make_stats = $2; }
+            elsif ($1 eq "add_titles") {
+                $add_titles = $2; }
+            elsif ($1 eq "group_letters") {
+                $group_letters = $2; }
+            elsif ($1 eq "check_images") {
+                $check_images = $2;  }
+            elsif ($1 eq "extension") {
+                $extension = $2;  }
+            elsif ($1 eq "private") {
+                $private = $2;  }
+            elsif ($1 eq "out_dir") {
+                $out_dir = $2;  }
+            elsif ($1 eq "photo_dir") {
+                $photo_dir = $2; }
+            elsif ($1 eq "photo_thumbnails") {
+                $photoThumbnails = $2; }
+            elsif ($1 eq "treepic_path") {
+                $treepic_path = $2;  }
+            elsif ($1 eq "update_status") {
+                $updateStatus = $2; }
+        }
+    }
 }
 else {
     print "Cannot find preferences file $prefsFile - using defaults\n";
