@@ -460,9 +460,11 @@ while (<>) {
         elsif ($in1 == 4) { # NOTE in individual
             if ($rol =~ /CONC\s?(.*)/) {          
                 $indiv_note{$indiv_id} = $indiv_note{$indiv_id}." $1";
+                print "Adding per CONC: $1\n";
             }
             elsif ($rol =~ /CONT\s?(.*)/) {
                 $indiv_note{$indiv_id} = $indiv_note{$indiv_id}."<p/>\n$1" ;
+                print "Adding per CONT: $1\n";
             }
         }
         if ($in1 == 7) { # CHR in individual
@@ -1226,7 +1228,8 @@ sub show_reading_status {
 #############################################
 # Uses OUT_FILE.
 sub print_footer {
-    print OUT_FILE "Created by Dan Pidcock's <a href=\"http://www.pidcock.co.uk/gth/\">GedcomToHTML</a> v$version.<p/>\n";
+    print OUT_FILE "Created by Dan Pidcock's <a href=\"https://github.com/danio/gedcomtohtml\">GedcomToHTML</a> v$version.<p/>\n";
+    print OUT_FILE "Data compiled, maintained, and hosted by Jay Hannah &lt;jay(at)jays(dot)net&gt;. <a href='http://jays.net/genealogy/'>http://jays.net/genealogy/</a>\n";
     print OUT_FILE "</body></html>\n";
 }
 
