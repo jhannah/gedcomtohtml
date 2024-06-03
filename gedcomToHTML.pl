@@ -1,7 +1,10 @@
 #!/usr/bin/perl
 
+use strict;
+use warnings;
+
 # gedcomToHTML.pl 1.5.6 -- Dan Pidcock 22 Feb 2007
-$version = "1.5.6"; # version number
+my $version = "1.5.6"; # version number
 # Danio@bigfoot.com - www.pidcock.co.uk/gth
 
 # Copyright (c) Dan Pidcock, 1997-2007.
@@ -34,57 +37,57 @@ $version = "1.5.6"; # version number
 # incorporated in v1.2.
 
 # The preferences file name
-$prefsFile = "gedcomToHTML.prefs";
+my $prefsFile = "gedcomToHTML.prefs";
 
 # The strings that are printed into files - change for different
 # languages
 
-$str_birth="Birth:";
-$str_chr="Christened:";
-$str_baptism="LDS Baptism:";
-$str_endowment="LDS Endowment:";
-$str_sealing_children="LDS Sealing to Children:";
-$str_sealing_spouse="LDS Sealing to Spouse:";
-$str_death="Death:";
-$str_burial="Burial:";
-$str_occupation="Occupation:";
-$str_private="(Private)";
-$str_father="Father:";
-$str_mother="Mother:";
-$str_child="Child";
-$str_notes="Notes:";
-$str_title="Title:";
-$str_author="Author:";
-$str_pub_info="Publication Info:";
-$str_abbr="Abbreviation:";
-$str_call_num="Call Number:";
-$str_comments="Comments:";
-$str_text="Text:";
-$str_source="Source";
-$str_all_surnames="All surnames in the tree";
-$str_people="People";
-$str_surnames="Surnames";
-$str_married="Married";
-$str_divorced="Divorced";
-$str_on="on ";
-$str_at="at ";
-$str_list_of="List of";
-$str_lpeople="List of people";
-$str_lsurnames="List of surnames";
-$str_people_and="people and";
-$str_unique_names="unique names";
-$str_m="m.";
+my $str_birth="Birth:";
+my $str_chr="Christened:";
+my $str_baptism="LDS Baptism:";
+my $str_endowment="LDS Endowment:";
+my $str_sealing_children="LDS Sealing to Children:";
+my $str_sealing_spouse="LDS Sealing to Spouse:";
+my $str_death="Death:";
+my $str_burial="Burial:";
+my $str_occupation="Occupation:";
+my $str_private="(Private)";
+my $str_father="Father:";
+my $str_mother="Mother:";
+my $str_child="Child";
+my $str_notes="Notes:";
+my $str_title="Title:";
+my $str_author="Author:";
+my $str_pub_info="Publication Info:";
+my $str_abbr="Abbreviation:";
+my $str_call_num="Call Number:";
+my $str_comments="Comments:";
+my $str_text="Text:";
+my $str_source="Source";
+my $str_all_surnames="All surnames in the tree";
+my $str_people="People";
+my $str_surnames="Surnames";
+my $str_married="Married";
+my $str_divorced="Divorced";
+my $str_on="on ";
+my $str_at="at ";
+my $str_list_of="List of";
+my $str_lpeople="List of people";
+my $str_lsurnames="List of surnames";
+my $str_people_and="people and";
+my $str_unique_names="unique names";
+my $str_m="m.";
 
 # Characters to ignore when sorting surnames
-$ignoreSurnameSort = " '";
+my $ignoreSurnameSort = " '";
 
 # Leave the rest alone unless you know what's happenin'
 
-$in = 0; # What is being read.  
+my $in = 0; # What is being read.  
             # 0=nothing, 1=header, 2=family record, 
             # 3=individual record, 4=note record.
             # 5=source record.
-$in1 = 0; # What is at level 1 at the mo.
+my $in1 = 0; # What is at level 1 at the mo.
             # 0=nothing, 1=birth(indiv), 2=death(indiv),
             # 3=burial(indiv), 4=notes(i), 7=christening(indiv)
             # 50=marriage(fam),
@@ -101,22 +104,22 @@ print "Gedcom file @ARGV\n";
 #######################################################################
 # Get the preferences
 # Set defaults
-$family_table = 1;  # print family tree type table
-$print_family = 0;  # print detailed family info
-$print_notes = 1;   # Print an individual's notes
-$print_sources = 1; # Print an individual's source references
-$make_stats = 0;    # Make a statistics file
-$add_titles = 1;    # Add titles to names
-$group_letters = 1; # Group by letter
-$check_images = 1;  # Check for images in the $out_dir/$photo_dir directory
-$extension = "html"; # extension for created files
-$private = 1;       # Make birth information private
-$out_dir = "Html";  # Directory where the HTML files will be stored
-$photo_dir = "../Photo"; # Directory where the individual's picture files are
+my $family_table = 1;  # print family tree type table
+my $print_family = 0;  # print detailed family info
+my $print_notes = 1;   # Print an individual's notes
+my $print_sources = 1; # Print an individual's source references
+my $make_stats = 0;    # Make a statistics file
+my $add_titles = 1;    # Add titles to names
+my $group_letters = 1; # Group by letter
+my $check_images = 1;  # Check for images in the $out_dir/$photo_dir directory
+my $extension = "html"; # extension for created files
+my $private = 1;       # Make birth information private
+my $out_dir = "Html";  # Directory where the HTML files will be stored
+my $photo_dir = "../Photo"; # Directory where the individual's picture files are
                         # (relative to $out_dir)
-$photoThumbnails = 0;
-$treepic_path = "../Pics";
-$updateStatus = 1;
+my $photoThumbnails = 0;
+my $treepic_path = "../Pics";
+my $updateStatus = 1;
 if (open(IN_FILE, "<$prefsFile")) {
     while (<IN_FILE>) {
         # match anything except space or = then space = space anything except  or # anything
@@ -161,7 +164,7 @@ else {
 }
 
 # Get this year in 4 figure format
-$curr_year = 1900 + (localtime(time))[5];
+my $curr_year = 1900 + (localtime(time))[5];
 
 #######################################################################
 # Make the directory and chdir to it
@@ -177,10 +180,40 @@ if (!-e $out_dir) {
 # data structures.
 print "Reading information\n";
 $| = 1; # flushing for progress report.
-$num_indivs = 0;
-$num_families = 0;
-$num_source = 0;
-$num_repository = 0;
+my $num_indivs = 0;
+my $num_families = 0;
+my $num_source = 0;
+my $num_repository = 0;
+my $fam_id;
+my %fams;
+my $famc_cnt;
+my $indiv_id;
+my %indivs;
+my $num_fams;
+my $note_id;
+my %note;
+my $sour_id;
+my %sours;
+my $repo_id;
+my %repos;
+my $rol;
+my %fam_wife;
+my %fam_husb;
+my %fam_chil;
+my $key;
+my $name;
+my %indiv_surname;
+my %indiv_forname;
+my %indiv_name;
+my %indiv_name_unformatted;
+my %indiv_sex;
+my %indiv_titl;
+my %indiv_occu;
+my %indiv_note;
+my %indiv_sour;
+my %indiv_famc;
+my %indiv_fams;
+my %sour_titl;
 while (<>) {
     if (/^\s*0.*/) { # a 0 line
         if ($in1 != 0) # reset in1
@@ -275,9 +308,9 @@ while (<>) {
             #print "\tindividual $indiv_id $rol\n";
             if ($rol =~ /NAME\s(.*)/) {
                 # convert the surname to italics
-                $name = $1;
+                my $name = $1;
                 $name =~ /(.*)\/(.*)\/(.*)/;
-                $temp_surname = $2;
+                my $temp_surname = $2;
                 $temp_surname =~s/\s$//;
                 $indiv_surname{$indiv_id} = $temp_surname;
                 $indiv_forname{$indiv_id} = $1." ".$3;          
