@@ -1046,76 +1046,76 @@ else {
         "#footer"
          );
 }
-    # Go through every line in the fline array
-    #  if it is #main then insert every individual
-    #  if it is #footer print the footer
-    #  else just print the line
-    $fline = @fline;
-    for ($j = 0; $j < $fline; $j++) {
-        $_ = $fline[$j];
-        if (/#main/) { # do the main loop of all people
-            # read the format into out_fmt array from the fline array lines between #main and #end
-            $i = 0; $nsi = 0;
-            until ($line =~ /#end/) {
-                   $j++;
-                   $line = $fline[$j];
-                   $ns[$i] = 0;
-                   if ($line =~ /#ns(.*\n)/) {
-               $line = $1; # strip the #ns from $line
-               $ns[$i] = 1; # flag this line of out_fmt as a new surname line
-                   }
-                   $out_fmt[$i] = $line;
-                   $i++;
+# Go through every line in the fline array
+#  if it is #main then insert every individual
+#  if it is #footer print the footer
+#  else just print the line
+$fline = @fline;
+for ($j = 0; $j < $fline; $j++) {
+    $_ = $fline[$j];
+    if (/#main/) { # do the main loop of all people
+        # read the format into out_fmt array from the fline array lines between #main and #end
+        $i = 0; $nsi = 0;
+        until ($line =~ /#end/) {
+            $j++;
+            $line = $fline[$j];
+            $ns[$i] = 0;
+            if ($line =~ /#ns(.*\n)/) {
+                $line = $1; # strip the #ns from $line
+                $ns[$i] = 1; # flag this line of out_fmt as a new surname line
             }
-            $out_fmt[$i-1]=""; # get rid of #end
-            $len = @out_fmt;
-            $old_surname = "-o-o-";
-            foreach $indiv_id (sort by_surname keys %indivs) {
-                # is the surname different to the previous individual's surname?
-                $ns_this = (($indiv_surname{$indiv_id} ne $old_surname) && ($indiv_surname{$indiv_id} ne ""));
-                if ($ns_this) 
-                    {$old_surname = $indiv_surname{$indiv_id};}
-                # for every line in out_fmt
-                for ($i = 0; $i < $len; $i++) {
-                    # if this surname is different to previous or this line of out_fmt is not a new surname line
-                    # then print this line from out_fmt
-                    if ($ns_this || !$ns[$i]) {
-                        $line = $out_fmt[$i];
-                        $line =~ s/#ind_id/$indiv_id/gei;
-                        $line =~ s/#ind_forname/$indiv_forname{$indiv_id}/gei;
-                        $line =~ s/#ind_surname/$indiv_surname{$indiv_id}/gei;
-                        $line =~ s/#ind_titl/$indiv_titl{$indiv_id}/gei;
-                        if ($indiv_birt_date{$indiv_id} ne "") {
-                            $line =~ s/#ind_birt_date/$indiv_birt_date{$indiv_id}/gei;
-                        }
-                        elsif ($indiv_chr_date{$indiv_id} ne "") {
-                            $line =~ s/#ind_birt_date/"chr. $indiv_chr_date{$indiv_id}"/gei;
-                        }
-                        else {
-                            $line =~ s/#ind_birt_date//gei;
-                        }
-                        $line =~ s/#ind_deat_date/$indiv_deat_date{$indiv_id}/gei;
-                        if (($check_images) && ($imgpath{$indiv_id} ne "")) {
-                            $line =~ s/#photo/\<em\>\(photo available\)\<\/em\>/gi;
-                        }
-                        else {
-                            $line =~ s/#photo//gei;
-                        }
-                        # get rid of private birth date
-                        $line =~ s/\(\($str_private\) - \)/$str_private/;
-                        print OUT_FILE $line;
+            $out_fmt[$i] = $line;
+            $i++;
+        }
+        $out_fmt[$i-1]=""; # get rid of #end
+        $len = @out_fmt;
+        $old_surname = "-o-o-";
+        foreach $indiv_id (sort by_surname keys %indivs) {
+            # is the surname different to the previous individual's surname?
+            $ns_this = (($indiv_surname{$indiv_id} ne $old_surname) && ($indiv_surname{$indiv_id} ne ""));
+            if ($ns_this)
+                {$old_surname = $indiv_surname{$indiv_id};}
+            # for every line in out_fmt
+            for ($i = 0; $i < $len; $i++) {
+                # if this surname is different to previous or this line of out_fmt is not a new surname line
+                # then print this line from out_fmt
+                if ($ns_this || !$ns[$i]) {
+                    $line = $out_fmt[$i];
+                    $line =~ s/#ind_id/$indiv_id/gei;
+                    $line =~ s/#ind_forname/$indiv_forname{$indiv_id}/gei;
+                    $line =~ s/#ind_surname/$indiv_surname{$indiv_id}/gei;
+                    $line =~ s/#ind_titl/$indiv_titl{$indiv_id}/gei;
+                    if ($indiv_birt_date{$indiv_id} ne "") {
+                        $line =~ s/#ind_birt_date/$indiv_birt_date{$indiv_id}/gei;
                     }
+                    elsif ($indiv_chr_date{$indiv_id} ne "") {
+                        $line =~ s/#ind_birt_date/"chr. $indiv_chr_date{$indiv_id}"/gei;
+                    }
+                    else {
+                        $line =~ s/#ind_birt_date//gei;
+                    }
+                    $line =~ s/#ind_deat_date/$indiv_deat_date{$indiv_id}/gei;
+                    if (($check_images) && ($imgpath{$indiv_id} ne "")) {
+                        $line =~ s/#photo/\<em\>\(photo available\)\<\/em\>/gi;
+                    }
+                    else {
+                        $line =~ s/#photo//gei;
+                    }
+                    # get rid of private birth date
+                    $line =~ s/\(\($str_private\) - \)/$str_private/;
+                    print OUT_FILE $line;
                 }
-            } # end for each individual
-            @out_fmt = ();
-        }
-        elsif (/#footer/) {
-            &print_footer;
-        }
-        else {
-            print OUT_FILE $_;
-        }
-    } # for i=0 to $fline
+            }
+        } # end for each individual
+        @out_fmt = ();
+    }
+    elsif (/#footer/) {
+        &print_footer;
+    }
+    else {
+        print OUT_FILE $_;
+    }
+} # for i=0 to $fline
 close(OUT_FILE);
 
 
