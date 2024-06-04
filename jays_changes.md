@@ -47,3 +47,14 @@ I'm open to any feedback from Dan or Paul about how folks are maintaining GEDCOM
 Cheers,
 
 [Jay Hannah](http://jays.net/genealogy)
+
+
+## Options
+
+1. Debug `gedcomToHTML.pl` parsing as-is.
+2. Refactor `gedcomToHTML.pl`
+   - `use strict; use warnings;` so every scalar isn't a global floating around.
+   - Replace parsing code, use Gedcom.pm instead.
+3. Extend [`Gedcom::CGI`](https://github.com/pjcj/Gedcom.pm/blob/master/lib/Gedcom/CGI.pm#L86-L122) to do all the slick things `gedcomToHTML.pl` does.
+4. Extend `Gedcom::CGI` to generate static files instead of relying on CGI. (e.g. [all these links](https://pjcj.net/genealogy.html) are 404.
+   Static HTML tends to last decades, CGI tends to fail faster. Most people's GEDCOMs aren't millions of people, so static is fine, faster, simpler to host.)
