@@ -2,10 +2,17 @@
 
 use strict;
 use warnings;
+use Gedcom;
 
 # gedcomToHTML.pl 1.5.6 -- Dan Pidcock 22 Feb 2007
 my $version = "1.5.6"; # version number
-# Danio@bigfoot.com - www.pidcock.co.uk/gth
+# This email bounces and this website is down:
+#   Danio@bigfoot.com - www.pidcock.co.uk/gth
+# In 2023 Dan Pidcock was active on GitHub here:
+#   https://github.com/pre-commit/identify/pull/436
+#   So I tried reaching out to Dan here:
+#   https://github.com/danio/gedcomtohtml/issues/1
+# I've been unable to reach Dan. --Jay Hannah, June 2024
 
 # Copyright (c) Dan Pidcock, 1997-2007.
 
@@ -81,25 +88,12 @@ my $str_m="m.";
 # Characters to ignore when sorting surnames
 my $ignoreSurnameSort = " '";
 
-# Leave the rest alone unless you know what's happenin'
-
-my $in = 0; # What is being read.  
-            # 0=nothing, 1=header, 2=family record, 
-            # 3=individual record, 4=note record.
-            # 5=source record.
-my $in1 = 0; # What is at level 1 at the mo.
-            # 0=nothing, 1=birth(indiv), 2=death(indiv),
-            # 3=burial(indiv), 4=notes(i), 7=christening(indiv)
-            # 50=marriage(fam),
-            # 60=note(source),
-            # 61=comment(source).
-
 print "gedcomToHtml $version (c) Dan Pidcock 1997-2006\n";
 
 if ($#ARGV != 0) {
     die "usage: gedcomToHTML.pl <gedcom file>\n";
 }
-print "Gedcom file @ARGV\n";
+print "Gedcom file $ARGV[0]\n";
 
 #######################################################################
 # Get the preferences
@@ -178,7 +172,7 @@ if (!-e $out_dir) {
 #################################################################
 # Read the gedcom file in and created the individual and family 
 # data structures.
-print "Reading information\n";
+print "Reading $ARGV[0]\n";
 $| = 1; # flushing for progress report.
 my $num_indivs = 0;
 my $num_families = 0;
@@ -214,451 +208,17 @@ my %indiv_sour;
 my %indiv_famc;
 my %indiv_fams;
 my %sour_titl;
-while (<>) {
-    if (/^\s*0.*/) { # a 0 line
-        if ($in1 != 0) # reset in1
-            {$in1 = 0;}
-        if (/^\s*0\s*HEAD/) { # header
-            $in = 1;
-            #print "Header $_";
-        }
-        elsif (/^\s*0\s@(.*)@\sFAM/) { # family record
-            $in = 2;
-            $fam_id = $1;
-            $fams{$fam_id}++;
-            $famc_cnt = 1;
-            $num_families++;
-            &show_reading_status;
-            #print "Family $_";
-        }
-        elsif (/^\s*0\s@(.*)@\sINDI/) { # individual record
-            $in = 3;
-            $indiv_id = $1;
-            $indivs{$indiv_id}++;
-            $num_indivs++;
-            $num_fams = 0; # number of spouses
-            &show_reading_status;
-            #print "Individual $_";
-        }
-        elsif (/^\s*0\sTRLR/) { # end of file
-            $in = 0;
-        }
-        elsif (/^\s*0\s@(.*)@\sSUBM/) { # submission record - just ignore
-            $in = 0;
-        }
-        elsif (/^\s*0\s@(.*)@\sNOTE/) { # note record - linked to an indi
-            $note_id = $1;
-            # Separate notes in separate lines with line break.
-            $note{$note_id} = $note{$note_id}."<br/>";
-            $in = 4;
-        }
-        elsif (/^\s*0\s@(.*)@\sSOUR/) { # source record - linked to an indi
-            $sour_id = $1;
-            $sours{$sour_id}++;
-            $in = 5;
-                $num_source++;
-            &show_reading_status;
+my @html_ind_top;
+my @html_ind_bot;
 
-        }
-          elsif (/^\s*0\s@(.*)@\sREPO/) { # repository record - linked to a source record
-            $repo_id = $1;
-            $repos{$repo_id}++;
-            $in = 6;
-                $num_repository++;
-            &show_reading_status;
-        }
-        else {
-            $in = 0;
-            print "Don't understand this 0 line: $_";
-        }
-    }
-    elsif (/^\s*1\s(.*)/) { # a 1 line
-        $rol = $1;
-        if ($in1 != 0) # reset in1
-            {$in1 = 0;}
-        if ($in == 1) {
-            ; # ignore the header
-        }
-        elsif ($in == 2) { #family record
-            #print "\tfamily $fam_id $rol\n";
-            if ($rol =~ /HUSB\s@(.*)@/) {
-                $fam_husb{$fam_id} = $1;
-            }
-            if ($rol =~ /WIFE\s@(.*)@/) {
-                $fam_wife{$fam_id} = $1;
-            }
-            if ($rol =~ /CHIL\s@(.*)@/) {
-                #$key = $fam_id."@".$famc_cnt."@".$1;
-                #$fam_chil{$key} = $1;
-                if ($famc_cnt == 1) { # First one
-                    $fam_chil{$fam_id} = $1;}
-                else {
-                    $fam_chil{$fam_id} = $fam_chil{$fam_id}."@".$1;}
-                $key = $fam_id;
-                $famc_cnt++;
-            }
-            elsif ($rol =~ /MARR.*/) {
-                $in1 = 50;
-            }
-            elsif ($rol =~ /DIV.*/) {
-                $in1 = 51;
-            }
-        }
-        elsif ($in == 3) { # individual record
-            #print "\tindividual $indiv_id $rol\n";
-            if ($rol =~ /NAME\s(.*)/) {
-                # convert the surname to italics
-                my $name = $1;
-                $name =~ /(.*)\/(.*)\/(.*)/;
-                my $temp_surname = $2;
-                $temp_surname =~s/\s$//;
-                $indiv_surname{$indiv_id} = $temp_surname;
-                $indiv_forname{$indiv_id} = $1." ".$3;          
-                $_ = $name;
-                s/\// <i>/;
-                s/\//<\/i>/;
-                $indiv_name{$indiv_id} = $_;
-                $_ = $name;
-                s/\// /g;
-                $indiv_name_unformatted{$indiv_id} = $_;                
-            }
-            elsif ($rol =~ /SEX\s(.)/) {
-                $indiv_sex{$indiv_id} = $1;
-            }
-            elsif ($rol =~ /TITL\s(.*)/) {
-                $indiv_titl{$indiv_id} = $1;
-            }
-            elsif ($rol =~ /BIRT.*/) {
-                $in1 = 1;
-            }
-            elsif ($rol =~ /CHR.*/) {
-                $in1 = 7;
-            }
-            elsif ($rol =~ /DEAT.*/) {
-                $in1 = 2;
-            }
-            elsif ($rol =~ /BURI.*/) {
-                $in1 = 3;
-            }
-            elsif ($rol =~ /OCCU\s(.*)/) {
-                $indiv_occu{$indiv_id} = $1;
-            }
-            #elsif ($rol =~ /NOTE\s@(.*)@/) {
-                # note with link to level 0 note record
-            #    $indiv_note_link{$indiv_id} = $1;
-            #    $note_indiv_link{$1} = $indiv_id;
-            #    $in1 = 4;
-            #}
-            elsif ($rol =~ /NOTE\s(.*)/) {
-                $indiv_note{$indiv_id} = $1;
-                $in1 = 4;
-            }
-            elsif ($rol =~ /BAPL.*/) {
-                $in1 = 8;
-            }
-            elsif ($rol =~ /ENDL.*/) {
-                $in1 = 9;
-            }
-            elsif ($rol =~ /SLGC.*/) {
-                $in1 = 10;
-            }
-            elsif ($rol =~ /SLGS.*/) {
-                $in1 = 11;
-            }
-            elsif ($rol =~ /SOUR\s@(.*)@/) { # general source for individual
-                $indiv_sour{$indiv_id} = $1;
-            }
-            elsif ($rol =~ /FAMC\s@(.*)@/) { # child to family link
-                $indiv_famc{$indiv_id} = $1;
-            }
-            elsif ($rol =~ /FAMS\s@(.*)@/) { # spouse to family link
-                if ($num_fams > 0) {
-                    $indiv_fams{$indiv_id} = $indiv_fams{$indiv_id}."@".$1;
-                }
-                else {
-                    $indiv_fams{$indiv_id} = $1;                    
-                }
-                $num_fams++;
-            }
-        }
-        elsif ($in == 4) { # note record
-            # $note_id has the note link code
-            if ($rol =~ /CONC\s?(.*)/) {
-                $note{$note_id} = $note{$note_id}." $1";
-            }
-            elsif ($rol =~ /CONT\s?(.*)/) {
-                $note{$note_id} = $note{$note_id} . "<br/>\n$1" ;
-            }
-        }
-        elsif ($in == 5) { # sour record
-            # Convert any http references so a user jump from the source
-            # file directly to the source link.
-            # This assumes the reference is space delimited, could be better.
-            $rol =~ s/(http:\/\/\S+)/<a href=\"$1\">$1<\/a>/;
-
-            if ($rol =~ /TITL\s?(.*)/) {
-                $sour_titl{$sour_id} = $1;
-            }
-            elsif ($rol =~ /AUTH\s?(.*)/) {
-                $sour_auth{$sour_id} = $1;
-            }
-            elsif ($rol =~ /REPO\s@(.*)@/) {
-                $sour_repo{$sour_id} = $1;
-            }
-            elsif ($rol =~ /PUBL\s?(.*)/) {
-                $sour_publ{$sour_id} = $1;
-            }
-            elsif ($rol =~ /ABBR\s?(.*)/) {
-                $sour_abbr{$sour_id} = $1;
-            }
-            elsif ($rol =~ /CALN\s?(.*)/) {
-                $sour_caln{$sour_id} = $1;
-            }
-            elsif ($rol =~ /NOTE\s?(.*)/) {
-                $sour_note{$sour_id} = $1;
-                $in1 = 60;
-            }
-            elsif ($rol =~ /TEXT\s?(.*)/) {
-                $sour_text{$sour_id} = $1;
-                $in1 = 61;
-            }
-        }
-        elsif ($in == 6) { # sour record
-            # Convert any http references so a user jump from the source
-            # file directly to the source link.
-            # This assumes the reference is space delimited, could be better.
-            $rol =~ s/(http:\/\/\S+)/<a href=\"$1\">$1<\/a>/;
-
-            if ($rol =~ /NAME\s?(.*)/) {
-                $repo_name{$repo_id} = $1;
-            }
-            elsif ($rol =~ /ADDR\s?(.*)/) {
-                $repo_addr{$repo_id} = $1;
-                $in1 = 601;
-            }
-            elsif ($rol =~ /NOTE\s?(.*)/) {
-                $repo_note{$repo_id} = $1;
-                $in1 = 602;
-            }
-            elsif ($in1 == 1) { # TEXT in source
-                if ($rol =~ /CONC\s?(.*)/) {          
-                    $repo_addr{$repo_id} = $repo_addr{$repo_id}." $1";
-                }
-                elsif ($rol =~ /CONT\s?(.*)/) {          
-                    $repo_addr{$repo_id} = $repo_addr{$repo_id}."<br/>\n$1";
-                }
-            }
-        }
-    } # end if a 1 line
-    elsif (/^\s*2\s(.*)/) { # a 2 line
-        $rol = $1;
-        if ($in1 == 1) { # BIRT in individual
-            if ($rol =~ /DATE\s(.*)/) {
-                $indiv_birt_date{$indiv_id} = $1;
-                $indiv_birt{$indiv_id} = 1;
-            }
-            elsif ($rol =~ /PLAC\s(.*)/) {
-                $indiv_birt_plac{$indiv_id} = $1;
-                $indiv_birt{$indiv_id} = 1;
-            }
-            elsif ($rol =~ /SOUR\s@(.*)@/) { # source of birth record
-                $indiv_birt_sour{$indiv_id} = $1;
-                $indiv_birt{$indiv_id} = 1;
-            }
-        }
-        elsif ($in1 == 2) { # DEAT in individual
-            if ($rol =~ /DATE\s(.*)/) {
-                $indiv_deat_date{$indiv_id} = $1;
-                $indiv_deat{$indiv_id} = 1;
-            }
-            elsif ($rol =~ /PLAC\s(.*)/) {
-                $indiv_deat_plac{$indiv_id} = $1;
-                $indiv_deat{$indiv_id} = 1;
-            }
-            elsif ($rol =~ /SOUR\s@(.*)@/) { # source of death record
-                $indiv_deat_sour{$indiv_id} = $1;
-                $indiv_deat{$indiv_id} = 1;
-            }
-        }
-        elsif ($in1 == 3) { # BURI in individual
-            if ($rol =~ /DATE\s(.*)/) {
-                $indiv_buri_date{$indiv_id} = $1;
-                $indiv_buri{$indiv_id} = 1;
-            }
-            elsif ($rol =~ /PLAC\s(.*)/) {
-                $indiv_buri_plac{$indiv_id} = $1;
-                $indiv_buri{$indiv_id} = 1;
-            }
-        }
-        elsif ($in1 == 4) { # NOTE in individual
-            if ($rol =~ /CONC\s?(.*)/) {          
-                $indiv_note{$indiv_id} = $indiv_note{$indiv_id}." $1";
-                print "Adding per CONC: $1\n";
-            }
-            elsif ($rol =~ /CONT\s?(.*)/) {
-                $indiv_note{$indiv_id} = $indiv_note{$indiv_id}."<p/>\n$1" ;
-                print "Adding per CONT: $1\n";
-            }
-        }
-        if ($in1 == 7) { # CHR in individual
-            if ($rol =~ /DATE\s(.*)/) {
-                $indiv_chr_date{$indiv_id} = $1;
-                $indiv_chr{$indiv_id} = 1;
-            }
-            elsif ($rol =~ /PLAC\s(.*)/) {
-                $indiv_chr_plac{$indiv_id} = $1;
-                $indiv_che{$indiv_id} = 1;
-            }
-            elsif ($rol =~ /SOUR\s@(.*)@/) { # source of christening record
-                $indiv_chr_sour{$indiv_id} = $1;
-                $indiv_chr{$indiv_id} = 1;
-            }
-        }
-        elsif ($in1 == 8) { # BAPL in individual
-            if ($rol =~ /DATE\s(.*)/) {
-                $indiv_bapl_date{$indiv_id} = $1;
-                $indiv_bapl{$indiv_id} = 1;
-            }
-            elsif ($rol =~ /PLAC\s(.*)/) {
-                $indiv_bapl_plac{$indiv_id} = $1;
-                $indiv_bapl{$indiv_id} = 1;
-            }
-            elsif ($rol =~ /TEMP\s(.*)/) {
-                $indiv_bapl_temp{$indiv_id} = $1;
-                $indiv_bapl{$indiv_id} = 1;
-            }
-            elsif ($rol =~ /STAT\s(.*)/) {
-                $indiv_bapl_stat{$indiv_id} = $1;
-                $indiv_bapl{$indiv_id} = 1;
-            }
-        }
-        elsif ($in1 == 9) { # ENDL in individual
-            if ($rol =~ /DATE\s(.*)/) {
-                $indiv_endl_date{$indiv_id} = $1;
-                $indiv_endl{$indiv_id} = 1;
-            }
-            elsif ($rol =~ /PLAC\s(.*)/) {
-                $indiv_endl_plac{$indiv_id} = $1;
-                $indiv_endl{$indiv_id} = 1;
-            }
-            elsif ($rol =~ /TEMP\s(.*)/) {
-                $indiv_endl_temp{$indiv_id} = $1;
-                $indiv_endl{$indiv_id} = 1;
-            }
-            elsif ($rol =~ /STAT\s(.*)/) {
-                $indiv_endl_stat{$indiv_id} = $1;
-                $indiv_endl{$indiv_id} = 1;
-            }
-        }
-        elsif ($in1 == 10) { # SLGC in individual
-            if ($rol =~ /DATE\s(.*)/) {
-                $indiv_slgc_date{$indiv_id} = $1;
-                $indiv_slgc{$indiv_id} = 1;
-            }
-            elsif ($rol =~ /PLAC\s(.*)/) {
-                $indiv_slgc_plac{$indiv_id} = $1;
-                $indiv_slgc{$indiv_id} = 1;
-            }
-            elsif ($rol =~ /TEMP\s(.*)/) {
-                $indiv_slgc_temp{$indiv_id} = $1;
-                $indiv_slgc{$indiv_id} = 1;
-            }
-            elsif ($rol =~ /STAT\s(.*)/) {
-                $indiv_slgc_stat{$indiv_id} = $1;
-                $indiv_slgc{$indiv_id} = 1;
-            }
-        }
-        elsif ($in1 == 11) { # SLGS in individual
-            if ($rol =~ /DATE\s(.*)/) {
-                $indiv_slgs_date{$indiv_id} = $1;
-                $indiv_slgs{$indiv_id} = 1;
-            }
-            elsif ($rol =~ /PLAC\s(.*)/) {
-                $indiv_slgs_plac{$indiv_id} = $1;
-                $indiv_slgs{$indiv_id} = 1;
-            }
-            elsif ($rol =~ /TEMP\s(.*)/) {
-                $indiv_slgs_temp{$indiv_id} = $1;
-                $indiv_slgs{$indiv_id} = 1;
-            }
-            elsif ($rol =~ /STAT\s(.*)/) {
-                $indiv_slgs_stat{$indiv_id} = $1;
-                $indiv_slgs{$indiv_id} = 1;
-            }
-        }
-        elsif ($in1 == 50) { # MARR in family
-            if ($rol =~ /DATE\s(.*)/) {
-                $fam_marr_date{$fam_id} = $1;
-                $fam_marr{$fam_id} = 1;
-            }
-            elsif ($rol =~ /PLAC\s(.*)/) {
-                $fam_marr_plac{$fam_id} = $1;
-                $fam_marr{$fam_id} = 1;
-            }
-            elsif ($rol =~ /SOUR\s@(.*)@/) { # source of marriage record
-                $fam_marr_sour{$fam_id} = $1;
-                $fam_marr{$fam_id} = 1;
-            }
-        }
-        elsif ($in1 == 51) { # DIV in family
-            if ($rol =~ /DATE\s(.*)/) {
-                $fam_div_date{$fam_id} = $1;
-                $fam_div{$fam_id} = 1;
-            }
-            elsif ($rol =~ /PLAC\s(.*)/) {
-                $fam_div_plac{$fam_id} = $1;
-                $fam_div{$fam_id} = 1;
-            }
-            elsif ($rol =~ /SOUR\s@(.*)@/) { # source of divorce record
-                $fam_div_sour{$fam_id} = $1;
-                $fam_div{$fam_id} = 1;
-            }
-        }
-       elsif ($in1 == 60) { # NOTE in source
-            if ($rol =~ /CONC\s?(.*)/) {          
-                $sour_note{$sour_id} = $sour_note{$sour_id}." $1";
-            }
-            elsif ($rol =~ /CONT\s?(.*)/) {
-                $sour_note{$sour_id} = $sour_note{$sour_id}."<br/>\n$1";
-            }
-        }
-        elsif ($in1 == 61) { # TEXT in source
-            if ($rol =~ /CONC\s?(.*)/) {          
-                $sour_text{$sour_id} = $sour_text{$sour_id}." $1";
-            }
-            elsif ($rol =~ /CONT\s?(.*)/) {
-                $sour_text{$sour_id} = $sour_text{$sour_id}."<br/>\n$1";
-            }
-        }
-        elsif ($in1 == 601) { # TEXT in source
-            if ($rol =~ /CONC\s?(.*)/) {          
-                $repo_addr{$repo_id} = $repo_addr{$repo_id}." $1";
-            }
-            elsif ($rol =~ /CONT\s?(.*)/) {          
-                $repo_addr{$repo_id} = $repo_addr{$repo_id}."<br />\n$1";
-            }
-        }
-        elsif ($in1 == 602) { # TEXT in source
-            if ($rol =~ /CONC\s?(.*)/) {          
-                $repo_note{$repo_id} = $repo_note{$repo_id}." $1";
-            }
-            elsif ($rol =~ /CONT\s?(.*)/) {          
-                $repo_note{$repo_id} = $repo_note{$repo_id}."<br />\n$1";
-            }
-        }
-    } # end if a 2 line
-}
-
-#################################################################
-# Link note data to individual records
-foreach $note_id (keys %note) {
-    $indiv_note{$note_indiv_link{$note_id}} = $indiv_note{$note_indiv_link{$note_id}}.$indiv_note{$note_id};
-}    
+# Use CPAN to parse our GEDCOM file. 
+my $ged = Gedcom->new($ARGV[0]);
+print "Done parsing $ARGV[0]\n";
 
 #################################################################
 # Set up the HTML for the top and bottom of individual's files
 if (open(IN_FILE, "tpl_ind_top.html")) {
-    $i = 0;
+    my $i = 0;
     while (<IN_FILE>) {
         $html_ind_top[$i] = $_;
         $i++;
@@ -671,7 +231,7 @@ else { # use defaults
 close(IN_FILE);
 
 if (open(IN_FILE, "tpl_ind_bot.html")) {
-    $i = 0;
+    my $i = 0;
     while (<IN_FILE>) {
         $html_ind_bot[$i] = $_;
         $i++;
@@ -687,7 +247,7 @@ close(IN_FILE);
 #################################################################
 # show results
 print "\nCreating individual files\n";
-$ind_cnt = 0;
+my $ind_cnt = 0;
 # make a file for each individual
 foreach $indiv_id (keys %indivs) {
     $ind_cnt++;
@@ -701,10 +261,10 @@ foreach $indiv_id (keys %indivs) {
     
     # Split the list of spouse families into @fams.
     # Need to clear the array for some versions of perl.
-    @fams = ();
+    my @fams = ();
     @fams = split(/@/, $indiv_fams{$indiv_id});
     #print "Fams:@fams\n";
-    $famc = $indiv_famc{$indiv_id};
+    my $famc = $indiv_famc{$indiv_id};
 
     # Add the title to the name if required and exists
     if ($add_titles && $indiv_titl{$indiv_id})
@@ -1050,6 +610,7 @@ if ($print_sources)
     } # end foreach $sour_id (keys %sours)
 }
 
+__END__
 
 #############################################
 # make a list of people file
