@@ -51,8 +51,8 @@ Cheers,
 
 ## Options
 
-1. Refactor `gedcomToHTML.pl`
-   - to resolve INDI NOTEs.
+1. Enhance `gedcomToHTML.pl`
+   - to resolve INDI NOTE references.
    - `use strict; use warnings;` so every scalar isn't a global floating around.
    - replace parsing code, use Gedcom.pm instead.
 2. Extend [`Gedcom::CGI`](https://github.com/pjcj/Gedcom.pm/blob/master/lib/Gedcom/CGI.pm#L86-L122)
