@@ -51,12 +51,14 @@ Cheers,
 
 ## Options
 
-1. Debug `gedcomToHTML.pl` parsing as-is.
-2. Refactor `gedcomToHTML.pl`
+1. Refactor `gedcomToHTML.pl`
+   - to resolve INDI NOTEs.
    - `use strict; use warnings;` so every scalar isn't a global floating around.
-   - Replace parsing code, use Gedcom.pm instead.
-3. Extend [`Gedcom::CGI`](https://github.com/pjcj/Gedcom.pm/blob/master/lib/Gedcom/CGI.pm#L86-L122) to do all the slick things `gedcomToHTML.pl` does.
-4. Extend `Gedcom::CGI` to generate static files instead of relying on CGI. (e.g. [all these links](https://pjcj.net/genealogy.html) are 404.
-   Static HTML tends to last decades, CGI tends to fail faster. Most people's GEDCOMs aren't millions of people, so static is fine, faster, simpler to host.)
-5. Switch from `gedcomToHTML.pl` to [`ged2site`](https://github.com/nigelhorne/ged2site)
+   - replace parsing code, use Gedcom.pm instead.
+2. Extend [`Gedcom::CGI`](https://github.com/pjcj/Gedcom.pm/blob/master/lib/Gedcom/CGI.pm#L86-L122)
+   - to do all the slick things `gedcomToHTML.pl` does.
+   - to generate static files instead of relying on CGI. (e.g. [all these links](https://pjcj.net/genealogy.html) are 404.
+     Static HTML tends to last decades, CGI tends to fail faster. Most people's GEDCOMs aren't millions of people,
+     so static is fine, faster, simpler to host.)
+3. Switch from `gedcomToHTML.pl` to [`ged2site`](https://github.com/nigelhorne/ged2site)
    - 2024-06-06: Opening lots of tickets, working with Nigel <3 e.g. https://github.com/nigelhorne/ged2site/issues/114
