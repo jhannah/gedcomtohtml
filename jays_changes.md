@@ -59,4 +59,4 @@ Cheers,
 4. Extend `Gedcom::CGI` to generate static files instead of relying on CGI. (e.g. [all these links](https://pjcj.net/genealogy.html) are 404.
    Static HTML tends to last decades, CGI tends to fail faster. Most people's GEDCOMs aren't millions of people, so static is fine, faster, simpler to host.)
 5. Switch from `gedcomToHTML.pl` to [`ged2site`](https://github.com/nigelhorne/ged2site)
-   - Opening lots of tickets, working with Nigel <3 e.g. https://github.com/nigelhorne/ged2site/issues/115
+   - Opening lots of tickets, working with Nigel <3 e.g. https://github.com/nigelhorne/ged2site/issues/114
